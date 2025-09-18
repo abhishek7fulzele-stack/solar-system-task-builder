@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Task Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            min-height: 100vh;
+        }
+
+        .task-panel {
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ffd700, #ff6b47, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .progress-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .current-phase {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .add-task-form {
+            margin-bottom: 1.5rem;
+        }
+
+        .task-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .task-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 0.2rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .tab:not(.active) {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .task-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .task-list {
+            display: none;
+        }
+
+        .task-list.active {
+            display: block;
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .task-text {
+            flex: 1;
+            margin-right: 1rem;
+            font-weight: 500;
+        }
+
+        .task-meta {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.5rem;
+        }
+
+        .complete-btn {
+            background: linear-gradient(45deg, #6bcf7f, #4ecdc4);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .complete-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 15px rgba(107, 207, 127, 0.4);
+        }
+
+        .completed-task {
+            opacity: 0.7;
+            background: rgba(76, 175, 80, 0.1);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .completed-badge {
+            background: #4caf50;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .solar-system {
+            position: relative;
+            background: #000000;
+            overflow: hidden;
+        }
+
+        #solarCanvas {
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 1000;
+            transition: all 0.6s ease;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .achievement.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .achievement-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .achievement-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60vh 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="task-panel">
+            <div class="panel-header">
+                <h1 class="panel-title">🚀 Solar System Builder</h1>
+            </div>
+
+            <div class="progress-section">
+                <div class="current-phase" id="currentPhase">Phase 1: Star Formation</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalTasks">0</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="starsCount">0</div>
+                        <div class="stat-label">⭐ Stars</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="planetsCount">0</div>
+                        <div class="stat-label">🪐 Planets</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="moonsCount">0</div>
+                        <div class="stat-label">🌙 Moons</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="add-task-form">
+                <input type="text" id="taskInput" class="task-input" placeholder="Enter your task...">
+                <button onclick="addTask()" class="add-btn">🚀 Add Task</button>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('pending')">Active</div>
+                <div class="tab" onclick="switchTab('completed')">History</div>
+            </div>
+
+            <div class="task-content">
+                <div class="task-list active" id="pendingTasks"></div>
+                <div class="task-list" id="completedTasks"></div>
+            </div>
+        </div>
+
+        <div class="solar-system">
+            <canvas id="solarCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="achievement" id="achievement">
+        <div class="achievement-title" id="achievementTitle">🌟 First Star Created!</div>
+        <div class="achievement-text" id="achievementText">The universe begins to form...</div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let stars = [];
+        let planets = [];
+        let moons = [];
+        let totalCompletedTasks = 0;
+        let canvas, ctx;
+        let currentTab = 'pending';
+
+        const planetData = [
+            { name: 'Mercury', color: '#8C7853', size: 3, distance: 80 },
+            { name: 'Venus', color: '#FFC649', size: 5, distance: 110 },
+            { name: 'Earth', color: '#6B93D6', size: 6, distance: 140 },
+            { name: 'Mars', color: '#CD5C5C', size: 4, distance: 170 },
+            { name: 'Jupiter', color: '#D8CA9D', size: 16, distance: 220 },
+            { name: 'Saturn', color: '#FAD5A5', size: 14, distance: 270 },
+            { name: 'Uranus', color: '#4FD0E3', size: 8, distance: 320 },
+            { name: 'Neptune', color: '#4B70DD', size: 8, distance: 370 },
+            { name: 'Pluto', color: '#A0522D', size: 2, distance: 410 }
+        ];
+
+        const starColors = ['#FFFFFF', '#F8F8FF', '#FFFACD', '#FFE4B5', '#FFDAB9'];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('solarCanvas');
+            ctx = canvas.getContext('2d');
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            updateUI();
+            animate();
+            
+            document.getElementById('taskInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+
+            // Add demo tasks
+            setTimeout(() => {
+                tasks.push(
+                    { id: 1, text: "Complete project proposal", completed: false, createdAt: new Date(), completedAt: null },
+                    { id: 2, text: "Review team feedback", completed: false, createdAt: new Date(), completedAt: null }
+                );
+                renderTasks();
+            }, 1000);
+        });
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.task-list').forEach(list => list.classList.remove('active'));
+            document.getElementById(tabName === 'pending' ? 'pendingTasks' : 'completedTasks').classList.add('active');
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const taskText = input.value.trim();
+            
+            if (taskText) {
+                const task = {
+                    id: Date.now(),
+                    text: taskText,
+                    completed: false,
+                    createdAt: new Date(),
+                    completedAt: null
+                };
+                
+                tasks.push(task);
+                input.value = '';
+                renderTasks();
+            }
+        }
+
+        function renderTasks() {
+            const pendingList = document.getElementById('pendingTasks');
+            const completedList = document.getElementById('completedTasks');
+            
+            pendingList.innerHTML = '';
+            completedList.innerHTML = '';
+            
+            const pendingTasks = tasks.filter(task => !task.completed);
+            const completedTasks = tasks.filter(task => task.completed);
+            
+            pendingTasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
+                taskElement.innerHTML = `
+                    <div class="task-header">
+                        <div>
+                            <div class="task-text">${task.text}</div>
+                            <div class="task-meta">Created: ${task.createdAt.toLocaleDateString()}</div>
+                        </div>
+                        <button class="complete-btn" onclick="completeTask(${task.id})">Complete ✨</button>
+                    </div>
+                `;
+                pendingList.appendChild(taskElement);
+            });
+            
+            completedTasks.reverse().forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item completed-task';
+                taskElement.innerHTML = `
+                    <div class="task-header">
+                        <div>
+                            <div class="task-text">${task.text}</div>
+                            <div class="task-meta">
+                                Completed: ${task.completedAt.toLocaleDateString()} at ${task.completedAt.toLocaleTimeString()}
+                            </div>
+                        </div>
+                        <div class="completed-badge">✓ Done</div>
+                    </div>
+                `;
+                completedList.appendChild(taskElement);
+            });
+        }
+
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = true;
+                task.completedAt = new Date();
+                totalCompletedTasks++;
+                
+                processTaskCompletion();
+                showAchievement();
+                updateUI();
+                renderTasks();
+            }
+        }
+
+        function processTaskCompletion() {
+            if (totalCompletedTasks <= 100) {
+                createStar();
+                document.getElementById('achievementTitle').textContent = `⭐ Star #${totalCompletedTasks} Created!`;
+                document.getElementById('achievementText').textContent = 'Building the stellar backdrop...';
+            } else if (totalCompletedTasks <= 900) {
+                const planetIndex = Math.floor((totalCompletedTasks - 1) / 100) - 1;
+                if ((totalCompletedTasks - 100) % 100 === 1 && planetIndex < planetData.length) {
+                    createPlanet(planetIndex);
+                    document.getElementById('achievementTitle').textContent = `🪐 ${planetData[planetIndex].name} Appears!`;
+                    document.getElementById('achievementText').textContent = 'The solar system grows...';
+                } else {
+                    createStar();
+                    document.getElementById('achievementTitle').textContent = `⭐ Star #${stars.length} Created!`;
+                    document.getElementById('achievementText').textContent = 'Expanding the cosmos...';
+                }
+            } else {
+                if ((totalCompletedTasks - 900) % 10 === 1) {
+                    createMoon();
+                    document.getElementById('achievementTitle').textContent = `🌙 New Moon Appears!`;
+                    document.getElementById('achievementText').textContent = 'Adding orbital companions...';
+                } else {
+                    createStar();
+                    document.getElementById('achievementTitle').textContent = `⭐ Background Star Added!`;
+                    document.getElementById('achievementText').textContent = 'Enriching the stellar field...';
+                }
+            }
+        }
+
+        function createStar() {
+            const star = {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                color: starColors[Math.floor(Math.random() * starColors.length)],
+                brightness: Math.random() * 0.5 + 0.5,
+                twinkleSpeed: Math.random() * 0.02 + 0.01,
+                pulse: Math.random() * Math.PI * 2
+            };
+            stars.push(star);
+        }
+
+        function createPlanet(index) {
+            const planetInfo = planetData[index];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            const planet = {
+                name: planetInfo.name,
+                x: centerX + planetInfo.distance,
+                y: centerY,
+                size: planetInfo.size,
+                color: planetInfo.color,
+                distance: planetInfo.distance,
+                angle: Math.random() * Math.PI * 2,
+                orbitSpeed: 0.008 / Math.sqrt(index + 1),
+                centerX: centerX,
+                centerY: centerY,
+                hasRings: planetInfo.name === 'Saturn'
+            };
+            planets.push(planet);
+        }
+
+        function createMoon() {
+            if (planets.length > 0) {
+                const targetPlanet = planets[Math.floor(Math.random() * planets.length)];
+                const moon = {
+                    planetIndex: planets.indexOf(targetPlanet),
+                    size: 2,
+                    color: '#C0C0C0',
+                    distance: targetPlanet.size + 15 + Math.random() * 10,
+                    angle: Math.random() * Math.PI * 2,
+                    orbitSpeed: 0.05
+                };
+                moons.push(moon);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('totalTasks').textContent = totalCompletedTasks;
+            document.getElementById('starsCount').textContent = stars.length;
+            document.getElementById('planetsCount').textContent = planets.length;
+            document.getElementById('moonsCount').textContent = moons.length;
+
+            let phase;
+            if (totalCompletedTasks < 100) {
+                phase = "Phase 1: Star Formation";
+            } else if (totalCompletedTasks < 900) {
+                phase = "Phase 2: Planet Formation";
+            } else {
+                phase = "Phase 3: Moon Formation";
+            }
+            document.getElementById('currentPhase').textContent = phase;
+        }
+
+        function showAchievement() {
+            const achievement = document.getElementById('achievement');
+            achievement.classList.add('show');
+            
+            setTimeout(() => {
+                achievement.classList.remove('show');
+            }, 3000);
+        }
+
+        function animate() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Sun
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            ctx.save();
+            ctx.fillStyle = '#FFD700';
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Draw stars
+            stars.forEach(star => {
+                star.pulse += star.twinkleSpeed;
+                const brightness = star.brightness * (0.7 + 0.3 * Math.sin(star.pulse));
+                
+                ctx.save();
+                ctx.globalAlpha = brightness;
+                ctx.fillStyle = star.color;
+                ctx.shadowColor = star.color;
+                ctx.shadowBlur = star.size * 2;
+                
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw planets
+            planets.forEach(planet => {
+                planet.angle += planet.orbitSpeed;
+                
+                const x = planet.centerX + Math.cos(planet.angle) * planet.distance;
+                const y = planet.centerY + Math.sin(planet.angle) * planet.distance;
+                
+                // Draw orbit
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(planet.centerX, planet.centerY, planet.distance, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // Draw Saturn's rings
+                if (planet.hasRings) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(250, 213, 165, 0.6)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, planet.size * 1.8, planet.size * 0.3, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                
+                // Draw planet
+                ctx.save();
+                
+                if (planet.name === 'Earth') {
+                    ctx.fillStyle = '#4169E1';
+                    ctx.beginPath();
+                    ctx.arc(x, y, planet.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#228B22';
+                    ctx.beginPath();
+                    ctx.arc(x - 2, y - 1, planet.size * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = planet.color;
+                    ctx.beginPath();
+                    ctx.arc(x, y, planet.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+
+            // Draw moons
+            moons.forEach(moon => {
+                if (planets[moon.planetIndex]) {
+                    const planet = planets[moon.planetIndex];
+                    moon.angle += moon.orbitSpeed;
+                    
+                    const planetX = planet.centerX + Math.cos(planet.angle) * planet.distance;
+                    const planetY = planet.centerY + Math.sin(planet.angle) * planet.distance;
+                    
+                    const moonX = planetX + Math.cos(moon.angle) * moon.distance;
+                    const moonY = planetY + Math.sin(moon.angle) * moon.distance;
+                    
+                    ctx.save();
+                    ctx.fillStyle = moon.color;
+                    ctx.beginPath();
+                    ctx.arc(moonX, moonY, moon.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            });
+            
+            requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+</html>
