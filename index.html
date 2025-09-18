@@ -319,6 +319,10 @@
                         <div class="stat-label">🌙 Moons</div>
                     </div>
                 </div>
+
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; opacity: 0.7;">
+                    💾 Progress auto-saved locally
+                </div>
             </div>
 
             <div class="add-task-form">
@@ -377,6 +381,9 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
+            // Load saved data
+            loadGameData();
+            
             updateUI();
             animate();
             
@@ -386,14 +393,19 @@
                 }
             });
 
-            // Add demo tasks
-            setTimeout(() => {
-                tasks.push(
-                    { id: 1, text: "Complete project proposal", completed: false, createdAt: new Date(), completedAt: null },
-                    { id: 2, text: "Review team feedback", completed: false, createdAt: new Date(), completedAt: null }
-                );
+            // Add demo tasks only if no saved data exists
+            if (tasks.length === 0) {
+                setTimeout(() => {
+                    tasks.push(
+                        { id: 1, text: "Complete project proposal", completed: false, createdAt: new Date(), completedAt: null },
+                        { id: 2, text: "Review team feedback", completed: false, createdAt: new Date(), completedAt: null }
+                    );
+                    renderTasks();
+                    saveGameData();
+                }, 1000);
+            } else {
                 renderTasks();
-            }, 1000);
+            }
         });
 
         function resizeCanvas() {
@@ -425,6 +437,7 @@
                 tasks.push(task);
                 input.value = '';
                 renderTasks();
+                saveGameData(); // Save after adding task
             }
         }
 
@@ -482,6 +495,7 @@
                 showAchievement();
                 updateUI();
                 renderTasks();
+                saveGameData(); // Save after completing task
             }
         }
 
@@ -695,6 +709,89 @@
             });
             
             requestAnimationFrame(animate);
+        }
+
+        // Local Storage Functions
+        function saveGameData() {
+            try {
+                const gameData = {
+                    tasks: tasks.map(task => ({
+                        ...task,
+                        createdAt: task.createdAt.toISOString(),
+                        completedAt: task.completedAt ? task.completedAt.toISOString() : null
+                    })),
+                    stars: stars,
+                    planets: planets,
+                    moons: moons,
+                    totalCompletedTasks: totalCompletedTasks,
+                    lastSaved: new Date().toISOString()
+                };
+                localStorage.setItem('astroHabitData', JSON.stringify(gameData));
+            } catch (error) {
+                console.warn('Could not save game data:', error);
+            }
+        }
+
+        function loadGameData() {
+            try {
+                const savedData = localStorage.getItem('astroHabitData');
+                if (savedData) {
+                    const gameData = JSON.parse(savedData);
+                    
+                    // Restore tasks with proper date objects
+                    tasks = gameData.tasks.map(task => ({
+                        ...task,
+                        createdAt: new Date(task.createdAt),
+                        completedAt: task.completedAt ? new Date(task.completedAt) : null
+                    }));
+                    
+                    // Restore game state
+                    stars = gameData.stars || [];
+                    planets = gameData.planets || [];
+                    moons = gameData.moons || [];
+                    totalCompletedTasks = gameData.totalCompletedTasks || 0;
+                    
+                    console.log(`Astro Habit: Loaded progress with ${totalCompletedTasks} completed tasks!`);
+                }
+            } catch (error) {
+                console.warn('Could not load saved game data:', error);
+                // If loading fails, start fresh
+                tasks = [];
+                stars = [];
+                planets = [];
+                moons = [];
+                totalCompletedTasks = 0;
+            }
+        }
+
+        // Export/Import Functions for Advanced Users
+        function exportProgress() {
+            const gameData = {
+                tasks: tasks,
+                stars: stars,
+                planets: planets,
+                moons: moons,
+                totalCompletedTasks: totalCompletedTasks,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(gameData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'astro-habit-progress.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset your entire solar system? This cannot be undone!')) {
+                localStorage.removeItem('astroHabitData');
+                location.reload();
+            }
         }
     </script>
 </body>
